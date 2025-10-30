@@ -1,0 +1,161 @@
+﻿@page "/trainers"
+@inject ReCourse.Shared.Services.ApiService Api
+@using ReCourse.Shared.Models
+
+<h3 style="font-size:1.8rem; margin-bottom:1rem; color:#2c3e50;">Trainers</h3>
+
+<div style="display:flex; gap:0.5rem; margin-bottom:1.5rem;">
+    <input @bind="search" @bind:event="oninput"
+           placeholder="Search name/expertise..."
+           style="flex:1; padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+    <button @onclick="Search"
+            style="background-color:#3498db; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+        🔍 Search
+    </button>
+    <button @onclick="New"
+            style="background-color:#2ecc71; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+        ➕ New Trainer
+    </button>
+</div>
+
+@if (loading)
+{
+    <p style="color:#7f8c8d;">Loading...</p>
+}
+else
+{
+    <table style="width:100%; border-collapse:collapse; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:8px; overflow:hidden;">
+        <thead style="background-color:#f7f9fa; text-align:left; border-bottom:2px solid #e0e0e0;">
+            <tr>
+                <th style="padding:0.75rem;">Name</th>
+                <th style="padding:0.75rem;">Expertise</th>
+                <th style="padding:0.75rem;">Exp (yrs)</th>
+                <th style="padding:0.75rem;">Email</th>
+                <th style="padding:0.75rem;">Phone</th>
+                <th style="padding:0.75rem;">Bio</th>
+                <th style="padding:0.75rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in trainers)
+            {
+                <tr style="border-bottom:1px solid #f0f0f0; transition:background 0.2s;"
+                    onmouseover="this.style.background='#f9f9f9'"
+                    onmouseout="this.style.background='white'">
+                    <td style="padding:0.75rem; font-weight:500;">@t.FullName</td>
+                    <td style="padding:0.75rem;">@t.Expertise</td>
+                    <td style="padding:0.75rem;">@t.ExperienceYear</td>
+                    <td style="padding:0.75rem;">@t.Email</td>
+                    <td style="padding:0.75rem;">@t.PhoneNumber</td>
+                    <td style="padding:0.75rem; color:#555; max-width:350px; white-space:normal; word-wrap:break-word; line-height:1.4;">
+                        @t.Bio
+                    </td>
+
+                    <td style="padding:0.75rem;">
+                        <button @onclick="() => Edit(t.Id)"
+                                style="background-color:#f1c40f; color:white; border:none; padding:0.35rem 0.75rem; border-radius:6px; cursor:pointer; margin-right:0.25rem;">
+                            ✏️ Edit
+                        </button>
+                        <button @onclick="() => Delete(t.Id)"
+                                style="background-color:#e74c3c; color:white; border:none; padding:0.35rem 0.75rem; border-radius:6px; cursor:pointer;">
+                            🗑 Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (editing)
+{
+    <div class="editor"
+         style="margin-top:2rem; padding:1.5rem; border:1px solid #e0e0e0; border-radius:10px; background-color:white; box-shadow:0 4px 10px rgba(0,0,0,0.05); max-width:600px;">
+        <h4 style="margin-bottom:1rem; color:#34495e;">@(currentTrainer.Id == 0 ? "New Trainer" : "Edit Trainer")</h4>
+
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <input placeholder="Full name" @bind="currentTrainer.FullName"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <input placeholder="Expertise" @bind="currentTrainer.Expertise"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <input type="number" placeholder="Experience years" @bind="currentTrainer.ExperienceYear"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <input placeholder="Email" @bind="currentTrainer.Email"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <input placeholder="Phone number" @bind="currentTrainer.PhoneNumber"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <textarea placeholder="Bio" @bind="currentTrainer.Bio"
+                  style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem; min-height:100px;"></textarea>
+        </div>
+
+        <div style="margin-top:1.25rem; display:flex; gap:0.5rem;">
+            <button @onclick="Save"
+                    style="background-color:#2ecc71; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+                💾 Save
+            </button>
+            <button @onclick="Cancel"
+                    style="background-color:#95a5a6; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+                ❌ Cancel
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    List<Trainer> trainers = new();
+    bool loading = true;
+    bool editing = false;
+    string? search;
+    Trainer currentTrainer = new();
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    async Task Load()
+    {
+        loading = true;
+        trainers = await Api.GetTrainers();
+        loading = false;
+    }
+
+    async Task Search()
+    {
+        loading = true;
+        trainers = await Api.GetTrainers(search);
+        loading = false;
+    }
+
+    void New() { currentTrainer = new Trainer(); editing = true; }
+    async Task Edit(int id)
+    {
+        var t = await Api.GetTrainer(id);
+        if (t != null)
+        {
+            currentTrainer = t;
+            editing = true;
+        }
+    }
+
+    async Task Save()
+    {
+        if (currentTrainer.Id == 0)
+            await Api.CreateTrainer(currentTrainer);
+        else
+            await Api.UpdateTrainer(currentTrainer.Id, currentTrainer);
+
+        editing = false;
+        await Load();
+    }
+
+    void Cancel() => editing = false;
+
+    async Task Delete(int id)
+    {
+        await Api.DeleteTrainer(id);
+        await Load();
+    }
+}

@@ -1,0 +1,155 @@
+﻿@page "/courses"
+@inject ReCourse.Shared.Services.ApiService Api
+@using ReCourse.Shared.Models
+
+<h3 style="font-size:1.8rem; margin-bottom:1rem; color:#2c3e50;">Courses</h3>
+
+<div style="display:flex; gap:0.5rem; margin-bottom:1.5rem;">
+    <input @bind="search" @bind:event="oninput"
+           placeholder="Search title/level/trainer..."
+           style="flex:1; padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+    <button @onclick="Search"
+            style="background-color:#3498db; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+        🔍 Search
+    </button>
+    <button @onclick="New"
+            style="background-color:#2ecc71; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+        ➕ New Course
+    </button>
+</div>
+
+@if (loading)
+{
+    <p style="color:#7f8c8d;">Loading...</p>
+}
+else
+{
+    <table style="width:100%; border-collapse:collapse; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:8px; overflow:hidden;">
+        <thead style="background-color:#f7f9fa; text-align:left; border-bottom:2px solid #e0e0e0;">
+            <tr>
+                <th style="padding:0.75rem;">Title</th>
+                <th style="padding:0.75rem;">Description</th>
+                <th style="padding:0.75rem;">Level</th>
+                <th style="padding:0.75rem;">Trainer</th>
+                <th style="padding:0.75rem;">Duration (min)</th>
+                <th style="padding:0.75rem;">Price</th>
+                <th style="padding:0.75rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in courses)
+            {
+                <tr style="border-bottom:1px solid #f0f0f0; transition:background 0.2s;"
+                    onmouseover="this.style.background='#f9f9f9'"
+                    onmouseout="this.style.background='white'">
+                    <td style="padding:0.75rem; font-weight:500;">@c.Title</td>
+                    <td style="padding:0.75rem; color:#555;">@c.Description</td>
+                    <td style="padding:0.75rem;">@c.Level</td>
+                    <td style="padding:0.75rem;">@c.Trainer?.FullName</td>
+                    <td style="padding:0.75rem;">@c.DurationMinutes</td>
+                    <td style="padding:0.75rem;">$@c.Price</td>
+                    <td style="padding:0.75rem;">
+                        <button @onclick="() => Edit(c.Id)"
+                                style="background-color:#f1c40f; color:white; border:none; padding:0.35rem 0.75rem; border-radius:6px; cursor:pointer; margin-right:0.25rem;">
+                            ✏️ Edit
+                        </button>
+                        <button @onclick="() => Delete(c.Id)"
+                                style="background-color:#e74c3c; color:white; border:none; padding:0.35rem 0.75rem; border-radius:6px; cursor:pointer;">
+                            🗑 Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (editing)
+{
+    <div class="editor"
+         style="margin-top:2rem; padding:1.5rem; border:1px solid #e0e0e0; border-radius:10px; background-color:white; box-shadow:0 4px 10px rgba(0,0,0,0.05); max-width:600px;">
+        <h4 style="margin-bottom:1rem; color:#34495e;">@(currentCourse.Id == 0 ? "New Course" : "Edit Course")</h4>
+
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <input placeholder="Title" @bind="currentCourse.Title"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <textarea placeholder="Description" @bind="currentCourse.Description"
+                  style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem; min-height:100px;"></textarea>
+
+            <input type="number" placeholder="Duration (minutes)" @bind="currentCourse.DurationMinutes"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <input type="number" placeholder="Price" step="0.01" @bind="currentCourse.Price"
+                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
+
+            <select @bind="currentCourse.Level"
+                    style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;">
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+            </select>
+
+            <select @bind="currentCourse.TrainerId"
+                    style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;">
+                <option value="0">-- Select Trainer --</option>
+                @foreach (var t in trainers)
+                {
+                    <option value="@t.Id">@t.FullName (@t.Expertise)</option>
+                }
+            </select>
+        </div>
+
+        <div style="margin-top:1.25rem; display:flex; gap:0.5rem;">
+            <button @onclick="Save"
+                    style="background-color:#2ecc71; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+                💾 Save
+            </button>
+            <button @onclick="Cancel"
+                    style="background-color:#95a5a6; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">
+                ❌ Cancel
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    List<Course> courses = new();
+    List<Trainer> trainers = new();
+    bool loading = true;
+    bool editing = false;
+    string? search;
+    Course currentCourse = new();
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    async Task Load()
+    {
+        loading = true;
+        trainers = await Api.GetTrainers();
+        courses = await Api.GetCourses();
+        loading = false;
+    }
+
+    async Task Search()
+    {
+        loading = true;
+        courses = await Api.GetCourses(search);
+        loading = false;
+    }
+
+    void New() { currentCourse = new Course(); editing = true; }
+    async Task Edit(int id) { var c = await Api.GetCourse(id); if (c != null) { currentCourse = c; editing = true; } }
+    async Task Save()
+    {
+        if (currentCourse.Id == 0)
+            await Api.CreateCourse(currentCourse);
+        else
+            await Api.UpdateCourse(currentCourse.Id, currentCourse);
+
+        editing = false;
+        await Load();
+    }
+    void Cancel() => editing = false;
+    async Task Delete(int id) { await Api.DeleteCourse(id); await Load(); }
+}
