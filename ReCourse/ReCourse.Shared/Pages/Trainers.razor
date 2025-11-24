@@ -27,6 +27,7 @@ else
     <table style="width:100%; border-collapse:collapse; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:8px; overflow:hidden;">
         <thead style="background-color:#f7f9fa; text-align:left; border-bottom:2px solid #e0e0e0;">
             <tr>
+                <th style="padding:0.75rem;">Photo</th>
                 <th style="padding:0.75rem;">Name</th>
                 <th style="padding:0.75rem;">Expertise</th>
                 <th style="padding:0.75rem;">Exp (yrs)</th>
@@ -42,6 +43,14 @@ else
                 <tr style="border-bottom:1px solid #f0f0f0; transition:background 0.2s;"
                     onmouseover="this.style.background='#f9f9f9'"
                     onmouseout="this.style.background='white'">
+                    <td style="padding:0.75rem;">
+                        @if (!string.IsNullOrEmpty(t.PhotoFileName))
+                        {
+                            <img src="@($"/uploads/{t.PhotoFileName}")"
+                                 style="width:60px; height:60px; object-fit:cover; border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,0.2);" />
+                        }
+                    </td>
+
                     <td style="padding:0.75rem; font-weight:500;">@t.FullName</td>
                     <td style="padding:0.75rem;">@t.Expertise</td>
                     <td style="padding:0.75rem;">@t.ExperienceYear</td>
@@ -91,6 +100,19 @@ else
 
             <textarea placeholder="Bio" @bind="currentTrainer.Bio"
                   style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem; min-height:100px;"></textarea>
+
+            <!-- ⬇⬇⬇ Tambahkan bagian upload file di sini ⬇⬇⬇ -->
+            <InputFile OnChange="OnFileChange" />
+            @if (!string.IsNullOrEmpty(currentTrainer.PhotoFileName))
+            {
+                <img src="@($"/uploads/{currentTrainer.PhotoFileName}")"
+                     style="width:120px; height:120px; object-fit:cover; border-radius:10px; margin-top:10px;" />
+            }
+
+            @if (uploadedFileName != null)
+            {
+                <p style="color:green;">Uploaded: @uploadedFileName</p>
+            }
         </div>
 
         <div style="margin-top:1.25rem; display:flex; gap:0.5rem;">
@@ -112,6 +134,15 @@ else
     bool editing = false;
     string? search;
     Trainer currentTrainer = new();
+
+    IBrowserFile? selectedFile;
+    string? uploadedFileName;
+
+    void OnFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
 
     protected override async Task OnInitializedAsync() => await Load();
 
@@ -142,6 +173,15 @@ else
 
     async Task Save()
     {
+        // ⬇ Upload file dulu jika ada
+        if (selectedFile != null)
+        {
+            uploadedFileName = await Api.UploadFile(selectedFile);
+
+            // simpan nama file ke Trainer
+            currentTrainer.PhotoFileName = uploadedFileName;
+        }
+
         if (currentTrainer.Id == 0)
             await Api.CreateTrainer(currentTrainer);
         else

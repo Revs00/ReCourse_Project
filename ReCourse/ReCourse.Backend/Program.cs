@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using ReCourse.Backend.Data;
 using ReCourse.Backend.Models;
 
@@ -34,6 +35,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // penting!
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "Uploads")),
+    RequestPath = "/Uploads"
+});
+
 app.MapControllers();
 
 app.UseHttpsRedirection();
@@ -50,12 +59,16 @@ using (var scope = app.Services.CreateScope())
 
     if (!db.Trainers.Any())
     {
-        var t1 = new Trainer { FullName = "Budi Sutedjo", Email = "budis@gmail.com", Expertise = "Data Management", ExperienceYear = 6, PhoneNumber = "081000001", Bio = "Don't say busy when you're not as busy as myself!" };
-        var t2 = new Trainer { FullName = "Mario Sutopo", Email = "marios@gmail.com", Expertise = "Data Science", ExperienceYear = 4, PhoneNumber = "082000002", Bio = "Data enthusiast" };
-        db.Trainers.AddRange(t1, t2);
+        var t1 = new Trainer { FullName = "Budi Sutedjo", Email = "budis@gmail.com", Expertise = "Data Management", ExperienceYear = 20, PhoneNumber = "081000001", Bio = "Don't say busy when you're not as busy as myself!" };
+        var t2 = new Trainer { FullName = "Mario Sutopo", Email = "marios@gmail.com", Expertise = "Data Science", ExperienceYear = 5, PhoneNumber = "082000002", Bio = "Data enthusiast" };
+        var t3 = new Trainer { FullName = "Daniko Kevin", Email = "danikok@gmail.com", Expertise = "Machine Learning", ExperienceYear = 10, PhoneNumber = "083000003", Bio = "Machine Learning enthusiast" };
+        db.Trainers.AddRange(t1, t2, t3);
         db.Courses.AddRange(
             new Course { Title = "Dasar-Dasar Manajemen Organisasi", Description = "Belajar DDMO bersama Bapak Budi", DurationMinutes = 120, Price = 120, Level = "Intermediate", Trainer = t1 },
-            new Course { Title = "Introduction to Data Science", Description = "Basics of data processing and Machine Learning", DurationMinutes = 75, Price = 90, Level = "Beginner", Trainer = t2 }
+            new Course { Title = "Data Mining", Description = "Belajar Data Mining bersama Koko Mario", DurationMinutes = 120, Price = 120, Level = "Intermediate", Trainer = t2 },
+            new Course { Title = "Machine Learning", Description = "Basics of Machine Learning", DurationMinutes = 75, Price = 90, Level = "Beginner", Trainer = t3 },
+            new Course { Title = "Logaritma Pemrograman", Description = "Belajar Logaritma Pemrograman bersama Bapak Daniko", DurationMinutes = 60, Price = 150, Level = "Beginner", Trainer = t3 },
+            new Course { Title = "Data Warehouse", Description = "Belajar Data Warehouse bersama Koko Mario", DurationMinutes = 150, Price = 180, Level = "Intermediate", Trainer = t2 }
         );
         db.SaveChanges();
     }

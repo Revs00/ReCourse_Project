@@ -1,4 +1,5 @@
 ﻿using ReCourse.Shared.Models;
+using Microsoft.AspNetCore.Components.Forms; // <--- tambahkan ini
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,5 +35,18 @@ namespace ReCourse.Shared.Services
         public Task<HttpResponseMessage> CreateCourse(Course c) => _http.PostAsJsonAsync("api/courses", c);
         public Task<HttpResponseMessage> UpdateCourse(int id, Course c) => _http.PutAsJsonAsync($"api/courses/{id}", c);
         public Task<HttpResponseMessage> DeleteCourse(int id) => _http.DeleteAsync($"api/courses/{id}");
+
+        // File Upload
+        public async Task<string> UploadFile(IBrowserFile file)
+        {
+            using var content = new MultipartFormDataContent();
+            using var stream = file.OpenReadStream(5 * 1024 * 1024);
+
+            content.Add(new StreamContent(stream), "file", file.Name);
+
+            var response = await _http.PostAsync("api/Upload/UploadFile", content);
+
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 }

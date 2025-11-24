@@ -15,6 +15,8 @@ namespace ReCourse.Shared.Models
         public string PhoneNumber { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
         public int ExperienceYear { get; set; } = 0;
+        public string? PhotoFileName { get; set; }
+
 
         public List<Course>? Courses { get; set; }
     }

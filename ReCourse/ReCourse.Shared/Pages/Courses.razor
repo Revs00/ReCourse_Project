@@ -27,6 +27,7 @@ else
     <table style="width:100%; border-collapse:collapse; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:8px; overflow:hidden;">
         <thead style="background-color:#f7f9fa; text-align:left; border-bottom:2px solid #e0e0e0;">
             <tr>
+                <th style="padding:0.75rem;">Thumbnail</th>
                 <th style="padding:0.75rem;">Title</th>
                 <th style="padding:0.75rem;">Description</th>
                 <th style="padding:0.75rem;">Level</th>
@@ -42,6 +43,13 @@ else
                 <tr style="border-bottom:1px solid #f0f0f0; transition:background 0.2s;"
                     onmouseover="this.style.background='#f9f9f9'"
                     onmouseout="this.style.background='white'">
+                    <td style="padding:0.75rem;">
+                        @if (!string.IsNullOrEmpty(c.ThumbnailFileName))
+                        {
+                            <img src="@($"/uploads/{c.ThumbnailFileName}")"
+                                 style="width:70px; height:50px; object-fit:cover; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.2);" />
+                        }
+                    </td>
                     <td style="padding:0.75rem; font-weight:500;">@c.Title</td>
                     <td style="padding:0.75rem; color:#555;">@c.Description</td>
                     <td style="padding:0.75rem;">@c.Level</td>
@@ -98,6 +106,18 @@ else
                     <option value="@t.Id">@t.FullName (@t.Expertise)</option>
                 }
             </select>
+            <!-- ⬇⬇⬇ Tambahkan upload file untuk thumbnail/banner course -->
+            <InputFile OnChange="OnFileChange" />
+            @if (!string.IsNullOrEmpty(currentCourse.ThumbnailFileName))
+            {
+                <img src="@($"/uploads/{currentCourse.ThumbnailFileName}")"
+                     style="width:150px; height:100px; object-fit:cover; border-radius:8px; margin-top:10px;" />
+            }
+
+            @if (uploadedFileName != null)
+            {
+                <p style="color:green;">Uploaded: @uploadedFileName</p>
+            }
         </div>
 
         <div style="margin-top:1.25rem; display:flex; gap:0.5rem;">
@@ -120,6 +140,14 @@ else
     bool editing = false;
     string? search;
     Course currentCourse = new();
+    IBrowserFile? selectedFile;
+    string? uploadedFileName;
+
+    void OnFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
 
     protected override async Task OnInitializedAsync() => await Load();
 
@@ -142,6 +170,15 @@ else
     async Task Edit(int id) { var c = await Api.GetCourse(id); if (c != null) { currentCourse = c; editing = true; } }
     async Task Save()
     {
+        // ⬇ Upload file jika ada
+        if (selectedFile != null)
+        {
+            uploadedFileName = await Api.UploadFile(selectedFile);
+
+            // Simpan nama file ke Course (buat field ThumbnailFileName atau BannerFileName)
+            currentCourse.ThumbnailFileName = uploadedFileName;
+        }
+
         if (currentCourse.Id == 0)
             await Api.CreateCourse(currentCourse);
         else
