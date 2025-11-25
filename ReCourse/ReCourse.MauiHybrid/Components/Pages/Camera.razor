@@ -1,0 +1,152 @@
+﻿@page "/camera"
+@using Microsoft.Maui.Storage
+@inject IDispatcher Dispatcher
+
+<style>
+.camera-root{
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.camera-header{
+  display:flex;
+  gap:.5rem;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:.6rem;
+}
+
+.camera-msg{
+  color:#334d57;
+  font-size: .98rem;
+  margin-bottom:.6rem;
+}
+
+/* Buttons (augment bootstrap) */
+.btn {
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  padding:.5rem .8rem;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+  border: none;
+  background: var(--btn-bg, #0d6efd);
+  color: #fff;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.btn:active{ transform: translateY(1px); }
+.btn:focus{ outline: 3px solid rgba(13,110,253,0.16); outline-offset: 2px; }
+
+/* Secondary state */
+.btn.secondary{
+  background: #e9eef4;
+  color: #0b1220;
+}
+
+/* Image preview */
+.camera-preview{
+  margin-top: .85rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(2,6,23,0.05);
+}
+.camera-preview img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit: contain;
+}
+
+/* Mobile-friendly spacing */
+@@media (max-width: 640px){
+  .camera-root{ padding:.8rem; margin: .6rem; }
+  .camera-header{ flex-direction:column; align-items:flex-start; gap:.5rem; }
+  .btn{ width:100%; justify-content:center; padding:.6rem; }
+}
+
+/* Accessibility: reduce motion */
+@@media (prefers-reduced-motion: reduce){
+  .btn, .camera-preview img { transition:none !important; }
+}
+</style>
+
+
+<div class="camera-root">
+  <div class="camera-header">
+    <h3>Camera</h3>
+  </div>
+
+  <p class="camera-msg">@message</p>
+
+  <button class="btn" @onclick="TakePhoto">Take Photo</button>
+
+  @if (!string.IsNullOrEmpty(imageDataUrl))
+  {
+      <div class="camera-preview">
+          <img src="@imageDataUrl" alt="Captured photo" />
+      </div>
+  }
+</div>
+
+
+@code {
+    private string message = "Permintaan akses kamera and mengambil foto menggunakan kamera handphone Anda";
+    private string imageDataUrl;
+
+    private async Task<bool> CheckAndRequestCameraPermission()
+    {
+        try
+        {
+            var status = await Permissions.CheckStatusAsync<Permissions.Camera>();
+            if (status != PermissionStatus.Granted)
+            {
+                status = await Permissions.RequestAsync<Permissions.Camera>();
+            }
+
+            return status == PermissionStatus.Granted;
+        }
+        catch (Exception ex)
+        {
+            message = "Gagal mendapat akses izin : " + ex.Message;
+            return false;
+        }
+    }
+
+    private async Task TakePhoto()
+    {
+        if (!await CheckAndRequestCameraPermission())
+        {
+            message = "Akses izin kamera ditolak";
+            return;
+        }
+
+        try
+        {
+            var result = await MediaPicker.Default.CapturePhotoAsync();
+            if (result == null)
+            {
+                message = "Tidak ada foto yang diambil";
+                return;
+            }
+
+            // Save the file to cache and display as data URL
+            var stream = await result.OpenReadAsync();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            imageDataUrl = $"data:image/jpeg;base64,{Convert.ToBase64String(bytes)}";
+            message = "Foto berhasil diambil!";
+
+            // Force UI update on main thread
+            await Dispatcher.DispatchAsync(() => { });
+        }
+        catch (Exception ex)
+        {
+            message = "Terjadi error dalam mengambil foto : " + ex.Message;
+        }
+    }
+}
