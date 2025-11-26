@@ -8,7 +8,8 @@
         public int DurationMinutes { get; set; } = 60;
         public decimal Price { get; set; } = 0m;
         public string Level { get; set; } = "Beginner"; // Beginner|Intermediate|Advanced
+        public string? ThumbnailFileName { get; set; } = string.Empty;
         public int TrainerId { get; set; }
-        public Trainer? Trainer { get; set; }
+        public Trainer? Trainer { get; set; }   
     }
 }

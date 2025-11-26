@@ -18,6 +18,8 @@ namespace ReCourse
 
             // Add device-specific services used by the ReCourse.Shared project
             builder.Services.AddSingleton<IFormFactor, FormFactor>();
+            // Tambahkan baris ini
+            builder.Services.AddSingleton<ICameraService, ReCourse.Services.MauiCameraService>();
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddHttpClient<ApiService>(client =>

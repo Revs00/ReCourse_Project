@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using ReCourse.Backend.Data;
 using ReCourse.Backend.Models;
+using System.IO; // WAJIB: Tambahkan ini untuk Path.Combine
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +18,6 @@ builder.Services.AddSwaggerGen();
 // Using SQLite Database
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseInMemoryDatabase("TrainingDb"));
-/*builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));)*/
 
 // Allow MAUI and browsers in dev
 builder.Services.AddCors(options =>
@@ -26,30 +25,46 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ----- BAGIAN KONFIGURASI PIPELINE (app.Use...) -----
+
+// 1. Pengembangan/Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors();
+// 2. Keamanan & Pengalihan
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // penting!
+app.UseCors(); // Cors harus di awal
+
+// 3. Konfigurasi File Statis (WAJIB DITEMPATKAN SEBELUM MapControllers)
+// Penggunaan app.Environment.ContentRootPath adalah path yang stabil
+var uploadsDirectory = Path.Combine(app.Environment.ContentRootPath, "Uploads");
+
+// Pastikan direktori ada sebelum digunakan (mencegah System.IO.DirectoryNotFoundException)
+if (!Directory.Exists(uploadsDirectory))
+{
+    Directory.CreateDirectory(uploadsDirectory);
+    Console.WriteLine($"[INFO] Folder Uploads dibuat di: {uploadsDirectory}");
+}
+
+// Konfigurasi File Statis Standar (untuk wwwroot)
+app.UseStaticFiles();
+
+// Konfigurasi File Statis Khusus untuk Folder Uploads
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "Uploads")),
-    RequestPath = "/Uploads"
+    FileProvider = new PhysicalFileProvider(uploadsDirectory),
+    // Path URL yang digunakan browser: https://localhost:7010/uploads/namafile.jpg
+    RequestPath = "/uploads" // Catatan: Gunakan huruf kecil, ini sudah sesuai dengan standar URL
 });
 
-app.MapControllers();
 
-app.UseHttpsRedirection();
-
+// 4. Autorisasi dan Routing
 app.UseAuthorization();
-
 app.MapControllers();
+
 
 // Seed sample data (only when DB empty)
 using (var scope = app.Services.CreateScope())

@@ -1,6 +1,8 @@
 ﻿@page "/courses"
 @inject ReCourse.Shared.Services.ApiService Api
+@inject ICameraService CameraService
 @using ReCourse.Shared.Models
+@using ReCourse.Shared.Services
 
 <h3 style="font-size:1.8rem; margin-bottom:1rem; color:#2c3e50;">Courses</h3>
 
@@ -46,7 +48,7 @@ else
                     <td style="padding:0.75rem;">
                         @if (!string.IsNullOrEmpty(c.ThumbnailFileName))
                         {
-                            <img src="@($"/uploads/{c.ThumbnailFileName}")"
+                            <img src="@($"https://localhost:7010/uploads/{c.ThumbnailFileName}")"
                                  style="width:70px; height:50px; object-fit:cover; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.2);" />
                         }
                     </td>
@@ -79,11 +81,19 @@ else
         <h4 style="margin-bottom:1rem; color:#34495e;">@(currentCourse.Id == 0 ? "New Course" : "Edit Course")</h4>
 
         <div style="display:flex; flex-direction:column; gap:0.75rem;">
+
+            <label class="form-label">Cover Image</label>
+            @* Kita hanya butuh SATU InputFile, dan kita pakai OnImageSelected untuk pratinjau *@
+            <InputFile OnChange="OnImageSelected" class="form-control" accept="image/png, image/jpeg" />
+            @* BARIS BARU UNTUK KAMERA *@
+            <button type="button" class="btn btn-primary" @onclick="TakePhoto">
+                Camera
+            </button>
             <input placeholder="Title" @bind="currentCourse.Title"
                    style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
 
             <textarea placeholder="Description" @bind="currentCourse.Description"
-                  style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem; min-height:100px;"></textarea>
+                      style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem; min-height:100px;"></textarea>
 
             <input type="number" placeholder="Duration (minutes)" @bind="currentCourse.DurationMinutes"
                    style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
@@ -106,12 +116,23 @@ else
                     <option value="@t.Id">@t.FullName (@t.Expertise)</option>
                 }
             </select>
-            <!-- ⬇⬇⬇ Tambahkan upload file untuk thumbnail/banner course -->
-            <InputFile OnChange="OnFileChange" />
-            @if (!string.IsNullOrEmpty(currentCourse.ThumbnailFileName))
+
+            @* Pratinjau Gambar Baru atau Gambar Lama *@
+            @if (imagePreviewUrl != null)
+            {
+                <img src="@imagePreviewUrl"
+                     style="width:150px; height:100px; object-fit:cover; border-radius:8px; margin-top:10px;" />
+            }
+            @* else if (!string.IsNullOrEmpty(currentCourse.ThumbnailFileName))
             {
                 <img src="@($"/uploads/{currentCourse.ThumbnailFileName}")"
                      style="width:150px; height:100px; object-fit:cover; border-radius:8px; margin-top:10px;" />
+            } *@
+            else if (!string.IsNullOrEmpty(currentCourse.ThumbnailFileName))
+            {
+                // TAMBAHKAN CACHE BUSTER DI SINI
+                <img src="@($"/uploads/{currentCourse.ThumbnailFileName}?v={DateTime.Now.Ticks}")"
+                                style="width:150px; height:100px; object-fit:cover; border-radius:8px; margin-top:10px;" />
             }
 
             @if (uploadedFileName != null)
@@ -142,12 +163,13 @@ else
     Course currentCourse = new();
     IBrowserFile? selectedFile;
     string? uploadedFileName;
+    bool uploading = false;
 
-    void OnFileChange(InputFileChangeEventArgs e)
-    {
-        selectedFile = e.File;
-    }
+    // VARIABEL BARU UNTUK PRATINJAU GAMBAR
+    string? imagePreviewUrl;
 
+    // Konstanta untuk ukuran file (misalnya 5MB)
+    private const int MaxFileSize = 5 * 1024 * 1024;
 
     protected override async Task OnInitializedAsync() => await Load();
 
@@ -166,8 +188,24 @@ else
         loading = false;
     }
 
-    void New() { currentCourse = new Course(); editing = true; }
-    async Task Edit(int id) { var c = await Api.GetCourse(id); if (c != null) { currentCourse = c; editing = true; } }
+    void New()
+    {
+        currentCourse = new Course();
+        imagePreviewUrl = null; // Bersihkan pratinjau
+        editing = true;
+    }
+
+    async Task Edit(int id)
+    {
+        var c = await Api.GetCourse(id);
+        if (c != null)
+        {
+            currentCourse = c;
+            imagePreviewUrl = null; // Bersihkan pratinjau
+            editing = true;
+        }
+    }
+
     async Task Save()
     {
         // ⬇ Upload file jika ada
@@ -175,7 +213,7 @@ else
         {
             uploadedFileName = await Api.UploadFile(selectedFile);
 
-            // Simpan nama file ke Course (buat field ThumbnailFileName atau BannerFileName)
+            // Simpan nama file ke Course
             currentCourse.ThumbnailFileName = uploadedFileName;
         }
 
@@ -185,8 +223,166 @@ else
             await Api.UpdateCourse(currentCourse.Id, currentCourse);
 
         editing = false;
+        selectedFile = null; // Bersihkan selectedFile
+        imagePreviewUrl = null; // Bersihkan URL pratinjau
         await Load();
     }
+
     void Cancel() => editing = false;
-    async Task Delete(int id) { await Api.DeleteCourse(id); await Load(); }
+
+    async Task Delete(int id)
+    {
+        await Api.DeleteCourse(id);
+        await Load();
+    }
+
+    // GABUNGKAN LOGIC UNGGAH & PRATINJAU DI SINI
+    // private async Task OnImageSelected(InputFileChangeEventArgs args)
+    // {
+    //     selectedFile = args.File;
+    //     imagePreviewUrl = null; Reset
+
+    //     if (selectedFile.Size > MaxFileSize)
+    //     {
+    //         Tambahkan logic notifikasi error jika perlu
+    //         Console.WriteLine("File terlalu besar!");
+    //         selectedFile = null;
+    //         return;
+    //     }
+
+    //     Logic Pratinjau Lokal menggunakan Base64 (Hanya di Blazor WebAssembly/Server)
+    //     try
+    //     {
+    //         var format = "image/png"; Asumsi format gambar
+    //         var resizedFile = await selectedFile.RequestImageFileAsync(format, 100, 100); Ukuran kecil untuk pratinjau
+    //         var buffer = new byte[resizedFile.Size];
+    //         await resizedFile.OpenReadStream().ReadAsync(buffer);
+    //         imagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error membuat pratinjau: {ex.Message}");
+    //         imagePreviewUrl = null;
+    //     }
+    // }
+
+    // 1. Logika untuk Upload File Biasa (InputFile)
+    // private async Task OnImageSelected(InputFileChangeEventArgs e)
+    // {
+    //     var file = e.File;
+    //     if (file == null) return;
+
+    //     uploading = true;
+    //     StateHasChanged();
+        
+    //     Panggil metode ApiService yang menerima IBrowserFile
+    //     var returnedImagePath = await Api.UploadCourseImageAsync(file);
+
+    //     if (returnedImagePath != null)
+    //     {
+    //         currentCourse.ThumbnailFileName = returnedImagePath;
+    //     }
+
+    //     uploading = false;
+    //     StateHasChanged();
+    // }
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        // Reset state
+        selectedFile = file;
+        imagePreviewUrl = null;
+
+        if (selectedFile.Size > MaxFileSize)
+        {
+            Console.WriteLine("File terlalu besar!");
+            selectedFile = null;
+            return;
+        }
+
+        // Logic Pratinjau Lokal menggunakan Base64 (AKTIFKAN KEMBALI)
+        try
+        {
+            var format = "image/png";
+            var resizedFile = await selectedFile.RequestImageFileAsync(format, 100, 100);
+            var buffer = new byte[resizedFile.Size];
+            await resizedFile.OpenReadStream().ReadAsync(buffer);
+            imagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}"; // <--- Pratinjau Base64 muncul di sini
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error membuat pratinjau: {ex.Message}");
+            imagePreviewUrl = null;
+        }
+
+        // Panggil Upload hanya jika ada file
+        if (selectedFile != null)
+        {
+            uploading = true;
+            StateHasChanged();
+
+            // Panggil metode ApiService yang menerima IBrowserFile
+            var returnedImagePath = await Api.UploadCourseImageAsync(selectedFile);
+
+            if (returnedImagePath != null)
+            {
+                currentCourse.ThumbnailFileName = returnedImagePath;
+                // TIDAK PERLU MENGATUR imagePreviewUrl lagi di sini
+                // karena gambar akan diperbarui dari /uploads/ setelah Save.
+            }
+
+            uploading = false;
+        }
+        StateHasChanged();
+    }
+
+    // 2. Logika untuk Kamera (MediaPicker)
+    // Ganti method TakePhoto yang lama dengan ini
+    private async Task TakePhoto()
+    {
+        try
+        {
+            // Panggil service (Interface) yang sudah kita buat
+            var result = await CameraService.TakePhotoAsync();
+
+            if (result != null && result.Stream != null)
+            {
+                uploading = true;
+                // PENTING: Reset state InputFile dan Preview saat menggunakan kamera
+                selectedFile = null;
+                imagePreviewUrl = null;
+                StateHasChanged();
+
+                // Gunakan stream dan filename dari result
+                using (var streamToUpload = result.Stream)
+                {
+                    var returnedImagePath = await Api.UploadStreamAsync(streamToUpload, result.FileName);
+
+                    if (returnedImagePath != null)
+                    {
+                        currentCourse.ThumbnailFileName = returnedImagePath;
+                        // <<< SOLUSI UNTUK PREVIEW KAMERA: Atur imagePreviewUrl ke URL server
+                        imagePreviewUrl = $"/uploads/{returnedImagePath}?v={DateTime.Now.Ticks}";
+                    }
+                }
+                // Penting: Dispose stream setelah upload selesai
+                // result.Stream.Dispose();
+
+                uploading = false;
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine("Camera cancelled or not supported.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Camera error: {ex.Message}");
+            uploading = false;
+            StateHasChanged();
+        }
+    }
 }

@@ -1,6 +1,7 @@
 using ReCourse.Shared.Services;
 using ReCourse.Web.Components;
 using ReCourse.Web.Services;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,14 @@ builder.Services.AddHttpClient<ApiService>(client =>
 });
 
 var app = builder.Build();
+
+var uploadsDirectory = Path.Combine(app.Environment.ContentRootPath, "Uploads");
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(uploadsDirectory),
+//    // Tentukan URL path yang akan dilayani oleh server API:
+//    RequestPath = "/uploads"
+//});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
