@@ -6,6 +6,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 // Add device-specific services used by the ReCourse.Shared project
 builder.Services.AddSingleton<IFormFactor, FormFactor>();
+
 // Tambahkan baris ini
 builder.Services.AddSingleton<ICameraService, ReCourse.Web.Client.Services.WebCameraService>();
 builder.Services.AddHttpClient<ApiService>(client =>

@@ -1,0 +1,91 @@
+﻿@page "/geolocation"
+@inject ReCourse.Shared.Services.IGeolocationService GeolocationService
+@using ReCourse.Shared.Services
+
+<h3 style="font-size:1.8rem; margin-bottom:1rem; color:#2c3e50;">🗺️ Geolocation Tracker</h3>
+<p style="color:#555;">Dapatkan lokasi Anda saat ini menggunakan fitur native perangkat (Geolocation).</p>
+
+<div class="card" style="border:1px solid #e0e0e0; border-radius:10px; padding:1.5rem; max-width:500px; background-color:white;">
+    <h5 style="margin-bottom:1rem; color:#34495e;">Status Lokasi</h5>
+
+    @if (loading)
+    {
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Memuat...</span>
+        </div>
+        <p style="color:#3498db; margin-top:0.5rem;">Memuat lokasi...</p>
+    }
+    else if (!string.IsNullOrEmpty(currentLocation.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            <strong>Gagal mendapatkan lokasi!</strong>
+            <p class="mb-0">@currentLocation.ErrorMessage</p>
+        </div>
+    }
+    else if (currentLocation.Latitude != 0 || currentLocation.Longitude != 0)
+    {
+        <div class="alert alert-success" role="alert">
+            <strong>Lokasi Berhasil Diperoleh!</strong>
+            <p>Data lokasi diambil dari perangkat Anda (@(currentLocation.Altitude.HasValue ? "3D" : "2D")).</p>
+        </div>
+
+        <table class="table" style="width:100%; margin-top:1rem; border-collapse: collapse;">
+            <tbody>
+                <tr>
+                    <td style="padding:0.5rem; border:1px solid #ddd; background-color:#f9f9f9; font-weight:500;">Latitude</td>
+                    <td style="padding:0.5rem; border:1px solid #ddd;">@currentLocation.Latitude</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem; border:1px solid #ddd; background-color:#f9f9f9; font-weight:500;">Longitude</td>
+                    <td style="padding:0.5rem; border:1px solid #ddd;">@currentLocation.Longitude</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem; border:1px solid #ddd; background-color:#f9f9f9; font-weight:500;">Altitude</td>
+                    <td style="padding:0.5rem; border:1px solid #ddd;">@(currentLocation.Altitude.HasValue ? $"{currentLocation.Altitude.Value:F2} meter" : "N/A")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Link untuk membuka lokasi di Google Maps -->
+        <a href="@GoogleMapsUrl" target="_blank" class="btn btn-info mt-3"
+           style="background-color:#3498db; color:white; border:none; padding:0.5rem 1rem; border-radius:6px; cursor:pointer; text-align:center;">
+            Lihat di Google Maps
+        </a>
+    }
+
+    <button @onclick="GetLocation" disabled="@loading" class="btn btn-success mt-4"
+            style="background-color:#2ecc77; color:white; border:none; padding:0.75rem 1rem; border-radius:6px; cursor:pointer;">
+        @(loading ? "Mencari Lokasi..." : "Dapatkan Lokasi Sekarang")
+    </button>
+</div>
+
+@code {
+    // Variabel untuk menyimpan data lokasi
+    private LocationData currentLocation = new LocationData();
+    private bool loading = false;
+
+    // Properti terhitung untuk membuat URL Google Maps
+    private string GoogleMapsUrl =>
+        $"https://www.google.com/maps/search/?api=1&query={currentLocation.Latitude},{currentLocation.Longitude}";
+
+    protected override void OnInitialized()
+    {
+        // Set lokasi awal ke kosong
+        currentLocation = new LocationData();
+    }
+
+    private async Task GetLocation()
+    {
+        loading = true;
+        currentLocation.ErrorMessage = string.Empty;
+        StateHasChanged(); // Update UI untuk menampilkan loading
+
+        // Panggil service yang sudah di-inject
+        var result = await GeolocationService.GetCurrentLocationAsync();
+
+        currentLocation = result;
+        loading = false;
+
+        StateHasChanged(); // Update UI untuk menampilkan hasil
+    }
+}

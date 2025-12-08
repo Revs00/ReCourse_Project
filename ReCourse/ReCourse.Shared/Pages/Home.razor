@@ -1,6 +1,37 @@
 ﻿@page "/"
 @using ReCourse.Shared.Services
 @inject IFormFactor FormFactor
+@inject INetworkService NetworkService
+
+@if (NetworkService.CurrentStatus == ConnectionStatus.Disconnected)
+{
+    <div class="network-status-overlay">
+        <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading">⚠️ Koneksi Terputus!</h5>
+            <p>Anda saat ini sedang Offline. Mohon hubungkan kembali perangkat ke koneksi internet!</p>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Langganan ke event saat status koneksi berubah
+        NetworkService.ConnectivityChanged += OnConnectivityChanged;
+    }
+
+    private void OnConnectivityChanged(object? sender, ConnectionStatus status)
+    {
+        // Memaksa komponen untuk merender ulang setiap kali status berubah
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        // Penting: Hapus langganan saat komponen dibuang
+		NetworkService.ConnectivityChanged -= OnConnectivityChanged;
+    }
+}
 
 <PageTitle>Home</PageTitle>
 
@@ -12,3 +43,5 @@ Welcome to your new app running on <em>@factor</em> using <em>@platform</em>.
     private string factor => FormFactor.GetFormFactor();
     private string platform => FormFactor.GetPlatform();
 }
+
+

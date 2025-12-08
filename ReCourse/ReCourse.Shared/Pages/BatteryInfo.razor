@@ -1,0 +1,71 @@
+﻿@page "/battery"
+@inject IBatteryService BatteryService
+@using ReCourse.Shared.Services
+
+<h3 style="font-size:1.8rem; margin-bottom:1rem; color:#2c3e50;">🔋 Informasi Baterai</h3>
+<p style="color:#555;">Status baterai perangkat saat ini (Diperbarui secara real-time di perangkat mobile).</p>
+
+<div class="card" style="border:1px solid #e0e0e0; border-radius:10px; padding:1.5rem; max-width:500px; background-color:white;">
+    <h5 style="margin-bottom:1rem; color:#34495e;">Status Daya</h5>
+
+    <div class="progress mb-3" style="height:30px;">
+        <div class="progress-bar @ProgressBarClass"
+             role="progressbar"
+             style="width: @(currentBattery.ChargeLevel * 100)%;"
+             aria-valuenow="@(currentBattery.ChargeLevel * 100)"
+             aria-valuemin="0" aria-valuemax="100">
+            @((currentBattery.ChargeLevel * 100).ToString("F0"))%
+        </div>
+    </div>
+
+    <table class="table" style="width:100%; border-collapse: collapse;">
+        <tbody>
+            <tr>
+                <td style="padding:0.5rem; border:1px solid #ddd; background-color:#f9f9f9; font-weight:500;">Status</td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">
+                    @currentBattery.State
+                    @(currentBattery.State == "Charging" ? "⚡" : (currentBattery.State == "Discharging" ? "⬇️" : ""))
+                </td>
+            </tr>
+            <tr>
+                <td style="padding:0.5rem; border:1px solid #ddd; background-color:#f9f9f9; font-weight:500;">Sumber Daya</td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">@currentBattery.Source</td>
+            </tr>
+            <tr>
+                <td style="padding:0.5rem; border:1px solid #ddd; background-color:#f9f9f9; font-weight:500;">Pesan</td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">@currentBattery.StatusMessage</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private BatteryData currentBattery = new BatteryData();
+
+    // Properti terhitung untuk warna progress bar
+    private string ProgressBarClass => currentBattery.ChargeLevel <= 0.20 ? "bg-danger" :
+                                      currentBattery.ChargeLevel <= 0.50 ? "bg-warning" :
+                                      "bg-success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Muat status awal
+        currentBattery = await BatteryService.LoadBatteryInfoAsync();
+
+        // Langganan ke event Baterai (hanya relevan di MAUI)
+        BatteryService.BatteryChanged += OnBatteryChanged;
+    }
+
+    private void OnBatteryChanged(object? sender, BatteryData info)
+    {
+        currentBattery = info;
+        // Memaksa komponen untuk me-render ulang setiap kali status baterai berubah
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        // Penting: Hapus langganan saat komponen dibuang
+        BatteryService.BatteryChanged -= OnBatteryChanged;
+    }
+}

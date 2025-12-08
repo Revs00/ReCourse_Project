@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using ReCourse.Backend.Data;
 using ReCourse.Backend.Models;
+//using ReCourse.Shared.Services; // Tambahkan using ini
+//using ReCourse.Web.Client.Services; // Tambahkan using ini (Asumsi WebCameraService ada di sini)
 using System.IO; // WAJIB: Tambahkan ini untuk Path.Combine
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,12 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // Allow MAUI and browsers in dev
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+//// **********************************************
+//// TAMBAHKAN REGISTRASI CAMERA SERVICE UNTUK WEB
+//// **********************************************
+//// Di lingkungan server/web, kita menggunakan implementasi "kosong" (WebCameraService)
+//builder.Services.AddSingleton<ICameraService, WebCameraService>();
 
 var app = builder.Build();
 
