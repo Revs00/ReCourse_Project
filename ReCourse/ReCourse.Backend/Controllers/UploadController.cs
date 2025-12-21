@@ -11,7 +11,7 @@ namespace ReCourse.Backend.Controllers
     {
         private readonly IWebHostEnvironment _hostingEnvironment;
         // Tentukan ukuran maksimal file yang diizinkan (misalnya 5MB)
-        private const long MaxFileSize = 5 * 1024 * 1024;
+        private const long MaxFileSize = 10 * 1024 * 1024;
 
         public UploadController(IWebHostEnvironment hostingEnvironment)
         {

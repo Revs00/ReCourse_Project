@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using CommunityToolkit.Maui; // Tambahkan ini
 
 namespace ReCourse.MauiHybrid
 {
@@ -9,6 +10,7 @@ namespace ReCourse.MauiHybrid
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit() // WAJIB: Tambahkan baris ini
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -16,6 +18,7 @@ namespace ReCourse.MauiHybrid
 
             builder.Services.AddMauiBlazorWebView();
             //builder.Services.AddSingleton<ICameraService, MauiCameraService>();
+
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

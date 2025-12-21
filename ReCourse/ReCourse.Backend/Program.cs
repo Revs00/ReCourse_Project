@@ -7,6 +7,7 @@ using ReCourse.Backend.Models;
 //using ReCourse.Web.Client.Services; // Tambahkan using ini (Asumsi WebCameraService ada di sini)
 using System.IO; // WAJIB: Tambahkan ini untuk Path.Combine
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

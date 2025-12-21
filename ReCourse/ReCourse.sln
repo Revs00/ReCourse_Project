@@ -12,11 +12,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCourse.Web.Client", "ReCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCourse.Backend", "ReCourse.Backend\ReCourse.Backend.csproj", "{E6733019-02E8-6B11-2C24-D204C3305CAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCourse.MauiHybrid", "ReCourse.MauiHybrid\ReCourse.MauiHybrid.csproj", "{6E2C0659-E0F2-4878-8E00-945508EFAF7A}"
-	ProjectSection(ProjectDependencies) = postProject
-		{68FEB700-BE14-453A-A418-4A70914AF4D4} = {68FEB700-BE14-453A-A418-4A70914AF4D4}
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,12 +39,6 @@ Global
 		{E6733019-02E8-6B11-2C24-D204C3305CAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6733019-02E8-6B11-2C24-D204C3305CAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E6733019-02E8-6B11-2C24-D204C3305CAB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6E2C0659-E0F2-4878-8E00-945508EFAF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E2C0659-E0F2-4878-8E00-945508EFAF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E2C0659-E0F2-4878-8E00-945508EFAF7A}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{6E2C0659-E0F2-4878-8E00-945508EFAF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E2C0659-E0F2-4878-8E00-945508EFAF7A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6E2C0659-E0F2-4878-8E00-945508EFAF7A}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

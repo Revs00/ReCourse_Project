@@ -1,0 +1,58 @@
+﻿@page "/login"
+@using ReCourse.Shared.Services
+@inject AuthService AuthService
+@inject NavigationManager Nav
+
+<div class="login-page">
+    <div class="login-card shadow-lg">
+        <h2 class="text-primary fw-bold mb-4">ReCourse</h2>
+        <div class="mb-3 text-start">
+            <label class="form-label small text-muted">Username</label>
+            <input type="text" class="form-control" @bind="username" placeholder="Masukkan username" />
+        </div>
+        <div class="mb-4 text-start">
+            <label class="form-label small text-muted">Password (admin123)</label>
+            <input type="password" class="form-control" @bind="password" placeholder="Masukkan password" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger py-2 small">@errorMessage</div>
+        }
+
+        <button class="btn btn-primary w-100 py-2" @onclick="HandleLogin">Sign In</button>
+    </div>
+</div>
+
+<style>
+    .login-page {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%);
+        position: fixed; top: 0; left: 0; width: 100%; z-index: 2000;
+    }
+    .login-card {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+    }
+</style>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string errorMessage = "";
+
+    private void HandleLogin()
+    {
+        if (AuthService.Login(username, password))
+            Nav.NavigateTo("/");
+        else
+            errorMessage = "Password salah! (Coba: admin123)";
+    }
+}

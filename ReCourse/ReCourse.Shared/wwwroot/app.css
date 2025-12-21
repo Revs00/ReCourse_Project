@@ -1,27 +1,367 @@
+/* --- CSS Variables untuk Konsistensi --- */
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --accent-color: #4cc9f0;
+    --bg-light: #e0f2fe;
+    /* Warna Navbar Baru: Gradasi Biru Dalam agar kontras dengan BG Es */
+    --navbar-grad-start: #1e3a8a; /* Blue 800 */
+    --navbar-grad-end: #3b82f6; /* Blue 500 */
+
+    --text-navy: #1e293b;
+    --card-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    --border-radius: 16px;
+    --transition-speed: 0.3s;
+}
+
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-navy);
+    margin: 0;
+    padding: 0;
 }
 
-a, .btn-link {
-    color: #006bb7;
+/* --- Root Layout & Centering --- */
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
+.main-body {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Konten PAS di tengah */
+}
+
+.content-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* --- Top Navbar: Gradasi Deep Winter Blue --- */
+.top-navbar {
+    /* Menggunakan gradasi biru tua ke biru yang lebih cerah */
+    background: linear-gradient(135deg, var(--navbar-grad-start) 0%, var(--navbar-grad-end) 100%);
+    padding: 0.8rem 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Teks Logo menjadi Putih agar kontras di Navbar Tua */
+.logo-text {
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    letter-spacing: -1px;
+    margin: 0;
+}
+
+/* --- NavLinks agar terlihat di Navbar Gelap --- */
+.nav-links .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all var(--transition-speed);
+}
+
+    /* Hover di Navbar Gelap */
+    .nav-links .nav-link:hover {
+        color: #ffffff !important;
+        background-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .nav-links .nav-link.active {
+        color: #ffffff !important;
+        background-color: rgba(255, 255, 255, 0.25);
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+/* --- Elemen Card Modern --- */
+/* --- Elemen Card Modern --- */
+.card {
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--card-shadow);
+    /* Gunakan putih solid (bukan transparan) agar teks mudah dibaca di atas bg biru */
+    background: #ffffff;
+    transition: transform var(--transition-speed) ease;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    }
+
+/* --- Tombol Elegan --- */
 .btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 10px !important;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    .btn-primary:hover {
+        filter: brightness(1.1);
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+/* --- Custom Logout Button --- */
+.btn-logout {
+    background-color: #ff8a8a; /* Merah muda soft */
+    color: white !important;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all var(--transition-speed) ease;
+    box-shadow: 0 2px 8px rgba(255, 138, 138, 0.3);
 }
 
-.content {
-    padding-top: 1.1rem;
+    .btn-logout:hover {
+        background-color: #ff5c5c; /* Merah yang lebih terang tapi tetap soft */
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 92, 92, 0.4);
+        color: white !important;
+    }
+
+    .btn-logout:active {
+        transform: scale(0.95);
+    }
+/* Cleanup Sidebar & Old Layout */
+.sidebar {
+    display: none !important;
 }
 
-h1:focus {
-    outline: none;
+.main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+/* Efek Snowfall */
+/* Container Salju */
+.snow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+/* Base style untuk butiran salju besar */
+/* Base style untuk butiran salju besar */
+.snow {
+    position: absolute;
+    top: -20px;
+    background: white;
+    border-radius: 50%;
+    filter: blur(1px);
+    /* Tambahkan shadow putih tipis agar ada efek bersinar/glow */
+    box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8), 200px 400px 2px white, 600px 200px 2px white;
+    animation: fall linear infinite;
+}
+
+/* Animasi jatuh dengan ayunan kiri-kanan */
+@keyframes fall {
+    0% {
+        transform: translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: translateY(50vh) translateX(30px);
+    }
+
+    100% {
+        transform: translateY(110vh) translateX(0);
+    }
+}
+
+/* Variasi Ukuran Gede dan Kecepatan */
+.snow:nth-child(1) {
+    width: 15px;
+    height: 15px;
+    left: 5%;
+    animation-duration: 7s;
+    opacity: 0.9;
+}
+
+.snow:nth-child(2) {
+    width: 12px;
+    height: 12px;
+    left: 25%;
+    animation-duration: 10s;
+    animation-delay: 2s;
+    opacity: 0.7;
+}
+
+.snow:nth-child(3) {
+    width: 18px;
+    height: 18px;
+    left: 45%;
+    animation-duration: 8s;
+    animation-delay: 1s;
+    opacity: 1;
+}
+
+.snow:nth-child(4) {
+    width: 14px;
+    height: 14px;
+    left: 65%;
+    animation-duration: 12s;
+    animation-delay: 4s;
+    opacity: 0.8;
+}
+
+.snow:nth-child(5) {
+    width: 20px;
+    height: 20px;
+    left: 85%;
+    animation-duration: 9s;
+    animation-delay: 3s;
+    opacity: 0.9;
+}
+
+.snow:nth-child(6) {
+    width: 10px;
+    height: 10px;
+    left: 15%;
+    animation-duration: 11s;
+    animation-delay: 5s;
+    opacity: 0.6;
+}
+
+.snow:nth-child(7) {
+    width: 16px;
+    height: 16px;
+    left: 35%;
+    animation-duration: 13s;
+    animation-delay: 2s;
+    opacity: 0.8;
+}
+
+.snow:nth-child(8) {
+    width: 13px;
+    height: 13px;
+    left: 55%;
+    animation-duration: 10s;
+    animation-delay: 6s;
+    opacity: 0.7;
+}
+
+.snow:nth-child(9) {
+    width: 19px;
+    height: 19px;
+    left: 75%;
+    animation-duration: 8s;
+    animation-delay: 1s;
+    opacity: 0.9;
+}
+
+.snow:nth-child(10) {
+    width: 15px;
+    height: 15px;
+    left: 95%;
+    animation-duration: 12s;
+    animation-delay: 3s;
+    opacity: 0.8;
+}
+
+/* --- Lampu Gantung Decor --- */
+.hanging-lights {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100px;
+    pointer-events: none; /* Supaya tidak bisa diklik/menghalangi tombol */
+    z-index: 1001; /* Di atas navbar sedikit */
+}
+
+/* Kabel */
+.light-string {
+    position: absolute;
+    top: -10px;
+    width: 120px;
+    height: 60px;
+    border-bottom: 2px solid #2d3436;
+    border-radius: 50%;
+}
+
+.string-left {
+    left: -20px;
+    transform: rotate(15deg);
+}
+
+.string-right {
+    right: -20px;
+    transform: rotate(-15deg);
+}
+
+/* Bohlam Umum */
+.bulb {
+    position: absolute;
+    width: 14px;
+    height: 20px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: light-glow 1.5s ease-in-out infinite alternate;
+}
+
+/* Lampu Biru (Glow Biru) */
+.bulb-blue {
+    background: #4cc9f0;
+    box-shadow: 0 0 15px 5px rgba(76, 201, 240, 0.6);
+}
+
+/* Lampu Kuning (Glow Kuning) */
+.bulb-yellow {
+    background: #ffd700;
+    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.6);
+    animation-delay: 0.5s;
+}
+
+/* Animasi Kedap-kedip Halus */
+@keyframes light-glow {
+    from {
+        opacity: 0.7;
+        filter: brightness(1);
+    }
+
+    to {
+        opacity: 1;
+        filter: brightness(1.5);
+        transform: scale(1.1);
+    }
+}
+
+/* Posisi Spesifik Lampu */
+.string-left .bulb:nth-child(1) {
+    left: 40px;
+    top: 45px;
+}
+
+.string-left .bulb:nth-child(2) {
+    left: 80px;
+    top: 55px;
+}
+
+.string-right .bulb:nth-child(1) {
+    right: 40px;
+    top: 45px;
+}
+
+.string-right .bulb:nth-child(2) {
+    right: 80px;
+    top: 55px;
 }
 
 .valid.modified:not([type=checkbox]) {
@@ -45,73 +385,4 @@ h1:focus {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
-
-.darker-border-checkbox.form-check-input {
-    border-color: #929292;
-}
-.app-container {
-    display: flex;
-    min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.sidebar {
-    width: 220px;
-    background-color: #1e293b; /* navy gelap */
-    color: white;
-    padding: 20px 10px;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-}
-
-.logo {
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.nav-links {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-    .nav-links a {
-        color: #e2e8f0;
-        text-decoration: none;
-        padding: 10px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .nav-links a:hover,
-        .nav-links a.active {
-            background-color: #334155;
-            color: #fff;
-        }
-
-.main-content {
-    flex: 1;
-    margin-left: 220px;
-    background-color: #f8fafc;
-    display: flex;
-    flex-direction: column;
-}
-
-.header {
-    background: white; 
-    padding: 15px 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.content-body {
-    flex: 1;
-    padding: 20px;
-}
 

@@ -9,7 +9,11 @@
         public decimal Price { get; set; } = 0m;
         public string Level { get; set; } = "Beginner"; // Beginner|Intermediate|Advanced
         public string? ThumbnailFileName { get; set; } = string.Empty;
+        // --- TAMBAHKAN BARIS INI ---
+        public string? AttachmentFileName { get; set; }
         public int TrainerId { get; set; }
-        public Trainer? Trainer { get; set; }   
+        public Trainer? Trainer { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }

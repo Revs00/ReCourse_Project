@@ -19,12 +19,51 @@
     <div id="app">Loading...</div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/Camera.js"></script>
     <script>
         window.onload = () => {
             if (navigator.mediaDevices) {
                 startCamera();
             }
+        };
+        window.takeScreenshotCanvas = async () => {
+            try {
+                // Menangkap elemen body
+                const canvas = await html2canvas(document.body, {
+                    useCORS: true, // Izinkan memuat gambar dari domain localhost (untuk thumbnail)
+                    logging: false
+                });
+                // Mengambil data Base64
+                return canvas.toDataURL("image/png").split(',')[1];
+            } catch (e) {
+                console.error("Screenshot error:", e);
+                return null;
+            }
+        };
+        window.PlayAudioLoop = (elementId) => {
+            const audio = document.getElementById(elementId);
+            if (!audio) return;
+
+            audio.volume = 0.15;
+
+            const forcePlay = () => {
+                audio.play()
+                    .then(() => {
+                        console.log("BGM Berhasil Jalan!");
+                        // Hapus listener agar tidak mengulang fungsi setiap kali klik
+                        ["click", "touchstart", "keydown"].forEach(ev =>
+                            document.removeEventListener(ev, forcePlay));
+                    })
+                    .catch(err => console.log("Menunggu interaksi user untuk suara..."));
+            };
+
+            // Pasang listener di semua jenis interaksi user
+            ["click", "touchstart", "keydown"].forEach(ev =>
+                document.addEventListener(ev, forcePlay));
+
+            // Coba jalankan langsung
+            forcePlay();
         };
     </script>
 

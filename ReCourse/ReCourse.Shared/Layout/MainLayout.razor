@@ -1,22 +1,98 @@
 ﻿@inherits LayoutComponentBase
+@using ReCourse.Shared.Services
+@inject AuthService AuthService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
-<div class="app-container">
-    <nav class="sidebar">
-        <h2 class="logo">ReCourse</h2>
-        <NavMenu />
-    </nav>
+<div class="app-shell">
+    @* Tag Audio Tersembunyi *@
+    <audio id="bgmPlayer" src="_content/ReCourse.Shared/audio/christmas-bgm.mp3" preload="auto" loop></audio>
+    @* Dekorasi Lampu Gantung *@
+    <div class="hanging-lights">
+        <div class="light-string string-left">
+            <div class="bulb bulb-blue"></div>
+            <div class="bulb bulb-yellow"></div>
+        </div>
 
-    <main class="main-content">
-        <header class="header">
-            <h3>@Title</h3>
-        </header>
-        <section class="content-body">
+        <div class="light-string string-right">
+            <div class="bulb bulb-yellow"></div>
+            <div class="bulb bulb-blue"></div>
+        </div>
+    </div>
+    @* Tambahkan baris ini *@
+    <div class="snow-container">
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+    </div>
+    @if (AuthService.IsLoggedIn)
+    {
+        @* --- TAMPILAN JIKA SUDAH LOGIN --- *@
+        <nav class="top-navbar sticky-top">
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="navbar-brand-group">
+                    <h2 class="logo-text m-0">ReCourse</h2>
+                </div>
+
+                <div class="nav-links d-flex align-items-center gap-3">
+                    <NavMenu />
+                    <button class="btn btn-sm btn-logout ms-3" @onclick="DoLogout">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-body">
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                <div class="container mt-4">
+                    <h3 class="page-title">@Title</h3>
+                </div>
+            }
+            <section class="content-container">
+                @Body
+            </section>
+        </main>
+    }
+    else
+    {
+        @* --- TAMPILAN JIKA BELUM LOGIN (HALAMAN LOGIN) --- *@
+        <main class="main-body">
             @Body
-        </section>
-    </main>
+        </main>
+    }
 </div>
 
 @code {
     [Parameter]
     public string? Title { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Pengecekan sederhana: jika rute saat ini bukan login dan belum login, arahkan ke login
+        if (!AuthService.IsLoggedIn && !Nav.Uri.Contains("/login"))
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+
+    private void DoLogout()
+    {
+        AuthService.Logout();
+        Nav.NavigateTo("/login");
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Panggil fungsi JS untuk mulai memutar musik
+            await JS.InvokeVoidAsync("PlayAudioLoop", "bgmPlayer");
+        }
+    }
 }

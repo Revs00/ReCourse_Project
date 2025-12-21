@@ -1,6 +1,7 @@
 ﻿@page "/courses"
 @inject ReCourse.Shared.Services.ApiService Api
 @inject ICameraService CameraService
+@inject IGeolocationService GeolocationService
 @using ReCourse.Shared.Models
 @using ReCourse.Shared.Services
 
@@ -36,6 +37,8 @@ else
                 <th style="padding:0.75rem;">Trainer</th>
                 <th style="padding:0.75rem;">Duration (min)</th>
                 <th style="padding:0.75rem;">Price</th>
+                <th style="padding:0.75rem;">Location</th>
+                <th style="padding:0.75rem;">Syllabus</th>
                 <th style="padding:0.75rem;">Actions</th>
             </tr>
         </thead>
@@ -58,6 +61,33 @@ else
                     <td style="padding:0.75rem;">@c.Trainer?.FullName</td>
                     <td style="padding:0.75rem;">@c.DurationMinutes</td>
                     <td style="padding:0.75rem;">$@c.Price</td>
+                    <td style="padding:0.75rem; font-size:0.85rem;">
+                        @if (c.Latitude != 0 || c.Longitude != 0)
+                        {
+                            <a href="@($"https://www.google.com/maps?q={c.Latitude},{c.Longitude}")"
+                               target="_blank"
+                               style="background-color:#3498db; color:white; text-decoration:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; display:inline-block;">
+                                📍 View Maps
+                            </a>
+                        }
+                        else
+                        {
+                            <span style="color:#ccc;">-</span>
+                        }
+                    </td>
+                    <td style="padding:0.75rem;">
+                        @if (!string.IsNullOrEmpty(c.AttachmentFileName))
+                        {
+                            <a href="@($"https://localhost:7010/uploads/{c.AttachmentFileName}")"
+                               target="_blank" class="btn btn-sm btn-outline-primary">
+                                📄 Download
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
                     <td style="padding:0.75rem;">
                         <button @onclick="() => Edit(c.Id)"
                                 style="background-color:#f1c40f; color:white; border:none; padding:0.35rem 0.75rem; border-radius:6px; cursor:pointer; margin-right:0.25rem;">
@@ -85,6 +115,15 @@ else
             <label class="form-label">Cover Image</label>
             @* Kita hanya butuh SATU InputFile, dan kita pakai OnImageSelected untuk pratinjau *@
             <InputFile OnChange="OnImageSelected" class="form-control" accept="image/png, image/jpeg" />
+            <label class="form-label" style="margin-top:10px;">Course Syllabus (PDF/DOCX)</label>
+            <InputFile OnChange="OnAttachmentSelected" class="form-control" accept=".pdf,.docx,.doc,.txt" />
+
+            @if (!string.IsNullOrEmpty(currentCourse.AttachmentFileName))
+            {
+                <p style="font-size: 0.85rem; color: #27ae60;">
+                    Current file: @currentCourse.AttachmentFileName
+                </p>
+            }
             @* BARIS BARU UNTUK KAMERA *@
             <button type="button" class="btn btn-primary" @onclick="TakePhoto">
                 Camera
@@ -100,7 +139,17 @@ else
 
             <input type="number" placeholder="Price" step="0.01" @bind="currentCourse.Price"
                    style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;" />
-
+            <label class="form-label">Location (Coordinates)</label>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input placeholder="Lat" @bind="currentCourse.Latitude" readonly
+                       style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:8px; background:#f9f9f9;" />
+                <input placeholder="Long" @bind="currentCourse.Longitude" readonly
+                       style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:8px; background:#f9f9f9;" />
+                <button type="button" @onclick="GetLocation"
+                        style="background-color:#9b59b6; color:white; border:none; padding:0.5rem; border-radius:8px; cursor:pointer;">
+                    📍 Get
+                </button>
+            </div>
             <select @bind="currentCourse.Level"
                     style="padding:0.5rem 0.75rem; border:1px solid #ccc; border-radius:8px; font-size:0.95rem;">
                 <option>Beginner</option>
@@ -164,6 +213,14 @@ else
     IBrowserFile? selectedFile;
     string? uploadedFileName;
     bool uploading = false;
+    // Variabel untuk menyimpan data lokasi
+    private LocationData currentLocation = new LocationData();
+    IBrowserFile? selectedAttachment;
+
+    private void OnAttachmentSelected(InputFileChangeEventArgs e)
+    {
+        selectedAttachment = e.File;
+    }
 
     // VARIABEL BARU UNTUK PRATINJAU GAMBAR
     string? imagePreviewUrl;
@@ -215,6 +272,12 @@ else
 
             // Simpan nama file ke Course
             currentCourse.ThumbnailFileName = uploadedFileName;
+        }
+        // --- TAMBAHKAN LOGIKA UPLOAD DOKUMEN ---
+        if (selectedAttachment != null)
+        {
+            // Kita menggunakan method yang sama karena ApiService.UploadFile bersifat umum
+            currentCourse.AttachmentFileName = await Api.UploadFile(selectedAttachment);
         }
 
         if (currentCourse.Id == 0)
@@ -385,4 +448,25 @@ else
             StateHasChanged();
         }
     }
+
+    private async Task GetLocation()
+    {
+        try
+        {
+            // Pastikan Anda sudah mengimplementasikan GetCurrentLocationAsync di IGeolocationService
+            var location = await GeolocationService.GetCurrentLocationAsync();
+            if (location != null)
+            {
+                currentCourse.Latitude = location.Latitude;
+                currentCourse.Longitude = location.Longitude;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting location: {ex.Message}");
+        }
+    }
+    private string GoogleMapsUrl =>
+        $"https://www.google.com/maps/search/?api=1&query={currentLocation.Latitude},{currentLocation.Longitude}";
 }

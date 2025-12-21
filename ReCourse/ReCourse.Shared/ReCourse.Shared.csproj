@@ -13,5 +13,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.5" />
   </ItemGroup>
+	
+  <ItemGroup>
+    <Content Update="wwwroot\audio\christmas-bgm.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
 </Project>

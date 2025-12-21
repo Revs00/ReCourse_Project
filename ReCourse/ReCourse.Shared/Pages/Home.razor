@@ -1,47 +1,286 @@
 ﻿@page "/"
 @using ReCourse.Shared.Services
+@implements IDisposable
 @inject IFormFactor FormFactor
 @inject INetworkService NetworkService
+@inject IBatteryService BatteryService
+@inject IGeolocationService GeolocationService
+@inject IGeocodingService GeocodingService
+@inject IScreenshotService ScreenshotService
+@inject ApiService Api
+@inject IJSRuntime JS
+@inject ISpeechService SpeechService
 
+<PageTitle>Home - ReCourse</PageTitle>
+
+@* --- Global Network Warning --- *@
 @if (NetworkService.CurrentStatus == ConnectionStatus.Disconnected)
 {
-    <div class="network-status-overlay">
-        <div class="alert alert-danger" role="alert">
-            <h5 class="alert-heading">⚠️ Koneksi Terputus!</h5>
-            <p>Anda saat ini sedang Offline. Mohon hubungkan kembali perangkat ke koneksi internet!</p>
+    <div class="alert alert-danger shadow-lg border-0 mb-4 animate__animated animate__fadeInDown" role="alert" style="border-radius: 16px; background: linear-gradient(135deg, #ff4d4d, #cc0000); color: white;">
+        <div class="d-flex align-items-center">
+            <span style="font-size: 2rem; margin-right: 1.5rem;">⚠️</span>
+            <div>
+                <h5 class="alert-heading mb-0 fw-bold">Koneksi Terputus!</h5>
+                <p class="mb-0 opacity-75">Anda saat ini sedang Offline. Beberapa fitur mungkin tidak berjalan maksimal.</p>
+            </div>
         </div>
     </div>
 }
 
-@code {
-    protected override void OnInitialized()
-    {
-        // Langganan ke event saat status koneksi berubah
-        NetworkService.ConnectivityChanged += OnConnectivityChanged;
+<div class="container py-4">
+    @* --- WELCOME HEADER --- *@
+    <header class="mb-5 text-center p-5 rounded-4 shadow-sm" style="background: white; border-bottom: 4px solid var(--primary-color);">
+        <h1 class="display-5 fw-bold mb-2" style="color: #2b2d42;">Welcome to ReCourse</h1>
+        <p class="text-muted fs-5 mb-4">Kuasai skill baru dengan platform pembelajaran masa depan.</p>
+        <div class="d-flex justify-content-center gap-2">
+            <span class="badge rounded-pill bg-primary px-3 py-2 shadow-sm">🚀 @factor</span>
+            <span class="badge rounded-pill bg-dark px-3 py-2 shadow-sm">💻 @platform</span>
+        </div>
+    </header>
+
+    <div class="row g-4">
+        @* --- MODULE: BATTERY INFO --- *@
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100 p-2">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold m-0" style="color: #34495e;">
+                        <span class="me-2">🔋</span>Status Perangkat
+                    </h5>
+                </div>
+                <div class="card-body px-4">
+                    <div class="text-center mb-4 mt-2">
+                        <span class="display-5 fw-bold text-primary">@((currentBattery.ChargeLevel * 100).ToString("F0"))%</span>
+                        <p class="text-muted small">@currentBattery.StatusMessage</p>
+                    </div>
+
+                    <div class="progress mb-4 shadow-sm" style="height: 14px; border-radius: 10px; background-color: #f0f0f0;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated @ProgressBarClass"
+                             role="progressbar"
+                             style="width: @(currentBattery.ChargeLevel * 100)%; border-radius: 10px;">
+                        </div>
+                    </div>
+
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted">Kondisi</span>
+                            <span class="fw-bold text-dark">@currentBattery.State @(currentBattery.State == "Charging" ? "⚡" : "")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted">Sumber Daya</span>
+                            <span class="fw-bold text-dark">@currentBattery.Source</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* --- MODULE: GEOLOCATION --- *@
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100 p-2">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold m-0" style="color: #34495e;">
+                        <span class="me-2">📍</span>Lokasi Perangkat
+                    </h5>
+                </div>
+                <div class="card-body px-4 d-flex flex-column">
+                    @if (isAnalyzing)
+                    {
+                        <div class="text-center my-auto py-5">
+                            <div class="spinner-grow text-primary" role="status"></div>
+                            <p class="text-muted mt-2 small">Mencari koordinat...</p>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(currentAddress))
+                    {
+                        <div class="p-3 mb-4 shadow-sm" style="background-color: #f0f7ff; border-radius: 16px; border-left: 5px solid var(--accent-color);">
+                            <p class="mb-1 fw-bold text-primary small">Alamat Ditemukan:</p>
+                            <p class="mb-2 text-dark" style="font-size: 0.9rem; line-height: 1.5;">@currentAddress</p>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-white text-dark border fw-normal">Lat: @lat.ToString("F3")</span>
+                                <span class="badge bg-white text-dark border fw-normal">Long: @lng.ToString("F3")</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center my-auto py-5 opacity-50">
+                            <i class="display-4 text-muted d-block mb-2">🌍</i>
+                            <p class="small italic">Klik tombol untuk deteksi alamat</p>
+                        </div>
+                    }
+
+                    <button @onclick="DetectLocation" disabled="@isAnalyzing" class="btn btn-primary w-100 py-2 mt-auto shadow-sm">
+                        @(isAnalyzing ? "Processing..." : "🔍 Deteksi Lokasi")
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @* --- MODULE: SCREENSHOT & VOICE --- *@
+        <div class="col-12 col-lg-4">
+            <div class="card h-100 p-2 shadow-lg" style="border-top: 5px solid var(--primary-color) !important;">
+                <div class="card-body p-4">
+                    @* Screenshot Section *@
+                    <div class="mb-5 text-center">
+                        <h6 class="fw-bold text-start mb-3"><span class="me-2">📸</span>Capture Screen</h6>
+                        <button @onclick="TakeScreenshot" disabled="@isCapturing" class="btn btn-dark w-100 py-2 mb-3 shadow-sm">
+                            @(isCapturing ? "Capturing..." : "Ambil Screenshot")
+                        </button>
+
+                        @if (screenshotGallery.Any())
+                        {
+                            <div class="text-start">
+                                <label class="small text-muted mb-2">Galeri Sesi Ini:</label>
+                                <div class="d-flex flex-wrap gap-2 overflow-auto pb-2" style="max-height: 120px;">
+                                    @foreach (var ss in screenshotGallery)
+                                    {
+                                        <div class="screenshot-item">
+                                            <a href="@($"https://localhost:7010/uploads/{ss}")" target="_blank">
+                                                <img src="@($"https://localhost:7010/uploads/{ss}")" alt="SS" />
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                                <button @onclick="() => screenshotGallery.Clear()" class="btn btn-link btn-sm text-danger p-0 mt-1 small">🗑️ Clear</button>
+                            </div>
+                        }
+                    </div>
+
+                    @* Voice Section *@
+                    <div class="pt-4 border-top">
+                        <h6 class="fw-bold mb-3"><span class="me-2">🎙️</span>Voice Assistant</h6>
+
+                        <div class="mb-3">
+                            <div class="input-group shadow-sm">
+                                <input type="text" class="form-control border-end-0 bg-light" @bind="sttResult" placeholder="Hasil suara..." readonly />
+                                <button class="btn btn-primary border-start-0" @onclick="RecordVoice">🎤</button>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-4 bg-light shadow-inner">
+                            <textarea class="form-control border-0 bg-transparent mb-2 p-0" @bind="ttsInput" rows="2" placeholder="Ketik teks..."></textarea>
+                            <button class="btn btn-success w-100 btn-sm shadow-sm" @onclick="PlayVoice">🔊 Ucapkan Teks</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Mengintegrasikan CSS tambahan yang belum ada di app.css */
+    .screenshot-item img {
+        width: 60px;
+        height: 60px;
+        border: 2px solid white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
-    private void OnConnectivityChanged(object? sender, ConnectionStatus status)
+    .shadow-inner {
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Animasi sederhana untuk loading */
+    .spinner-grow {
+        width: 3rem;
+        height: 3rem;
+    }
+</style>
+
+@code {
+    // ... (Logika C# Anda tetap sama persis seperti sebelumnya) ...
+    private string factor => FormFactor.GetFormFactor();
+    private string platform => FormFactor.GetPlatform();
+    private BatteryData currentBattery = new BatteryData();
+    private string ProgressBarClass => currentBattery.ChargeLevel <= 0.20 ? "bg-danger" :
+                                      currentBattery.ChargeLevel <= 0.50 ? "bg-warning" :
+                                      "bg-success";
+    private string currentAddress = "";
+    private double lat;
+    private double lng;
+    private bool isAnalyzing = false;
+    private bool isCapturing = false;
+    private string? lastScreenshotUrl;
+    private List<string> screenshotGallery = new List<string>();
+    private string sttResult = "";
+    private string ttsInput = "Halo, selamat datang di aplikasi Re Course!";
+
+    private async Task RecordVoice()
     {
-        // Memaksa komponen untuk merender ulang setiap kali status berubah
-        InvokeAsync(StateHasChanged);
+        sttResult = "Mendengarkan...";
+        StateHasChanged();
+        try { sttResult = await SpeechService.ListenAsync(); }
+        catch (Exception ex) { sttResult = "Error: " + ex.Message; }
+        finally { StateHasChanged(); }
+    }
+
+    private async Task PlayVoice()
+    {
+        if (!string.IsNullOrWhiteSpace(ttsInput))
+            await SpeechService.SpeakAsync(ttsInput);
+    }
+
+    private async Task TakeScreenshot()
+    {
+        isCapturing = true;
+        StateHasChanged();
+        try
+        {
+            var base64String = await JS.InvokeAsync<string>("takeScreenshotCanvas");
+            if (!string.IsNullOrEmpty(base64String))
+            {
+                byte[] screenshotData = Convert.FromBase64String(base64String);
+                using var stream = new MemoryStream(screenshotData);
+                string fileName = $"SS_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+                var uploadedName = await Api.UploadStreamAsync(stream, fileName);
+                if (!string.IsNullOrEmpty(uploadedName))
+                {
+                    lastScreenshotUrl = uploadedName;
+                    screenshotGallery.Insert(0, uploadedName);
+                }
+            }
+        }
+        catch (Exception ex) { Console.WriteLine($"Gagal screenshot JS: {ex.Message}"); }
+        finally { isCapturing = false; StateHasChanged(); }
+    }
+
+    private async Task DetectLocation()
+    {
+        isAnalyzing = true;
+        currentAddress = "";
+        try
+        {
+            var location = await GeolocationService.GetCurrentLocationAsync();
+            if (location != null)
+            {
+                lat = location.Latitude;
+                lng = location.Longitude;
+                currentAddress = await GeocodingService.GetAddressAsync(lat, lng);
+            }
+            else { currentAddress = "Could not detect location."; }
+        }
+        catch (Exception ex) { currentAddress = $"Error: {ex.Message}"; }
+        finally { isAnalyzing = false; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        NetworkService.ConnectivityChanged += OnConnectivityChanged;
+        currentBattery = await BatteryService.LoadBatteryInfoAsync();
+        BatteryService.BatteryChanged += OnBatteryChanged;
     }
 
     public void Dispose()
     {
-        // Penting: Hapus langganan saat komponen dibuang
-		NetworkService.ConnectivityChanged -= OnConnectivityChanged;
+        NetworkService.ConnectivityChanged -= OnConnectivityChanged;
+        BatteryService.BatteryChanged -= OnBatteryChanged;
+    }
+
+    private void OnConnectivityChanged(object? sender, ConnectionStatus status) => InvokeAsync(StateHasChanged);
+    private void OnBatteryChanged(object? sender, BatteryData info)
+    {
+        currentBattery = info;
+        InvokeAsync(StateHasChanged);
     }
 }
-
-<PageTitle>Home</PageTitle>
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app running on <em>@factor</em> using <em>@platform</em>.
-
-@code {
-    private string factor => FormFactor.GetFormFactor();
-    private string platform => FormFactor.GetPlatform();
-}
-
-

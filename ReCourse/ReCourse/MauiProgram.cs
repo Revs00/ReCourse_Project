@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using ReCourse.Services;
 using ReCourse.Shared.Services;
+using CommunityToolkit.Maui;
 
 namespace ReCourse
 {
@@ -11,6 +12,7 @@ namespace ReCourse
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit() // WAJIB: Tambahkan baris ini
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -26,6 +28,14 @@ namespace ReCourse
             builder.Services.AddSingleton<IGeolocationService, MauiGeolocationService>();
             // TAMBAHKAN REGISTRASI BATTERY SERVICE (MAUI)
             builder.Services.AddSingleton<IBatteryService, MauiBatteryService>();
+            // TAMBAHKAN REGISTRASI GEOCODING SERVICE (MAUI)
+            builder.Services.AddSingleton<IGeocodingService, MauiGeocodingService>();
+            // TAMBAHKAN REGISTRASI SCREENSHOT SERVICE (MAUI)
+            builder.Services.AddSingleton<IScreenshotService, MauiScreenshotService>();
+            // TAMBAHKAN REGISTRASI SPEECH SERVICE (MAUI)
+            builder.Services.AddSingleton<ISpeechService, MauiSpeechService>();
+            // TAMBAHKAN REGISTRASI LOGIN SERVICE (MAUI)
+            builder.Services.AddSingleton<AuthService>();
             // TAMBAHKAN REGISTRASI DEVICE DISPLAY SERVICE (MAUI)
             //builder.Services.AddSingleton<IDeviceDisplayService, MauiDeviceDisplayService>();
 
