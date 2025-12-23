@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>ReCourse</title>
     <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="_content/ReCourse.Shared/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="_content/ReCourse.Shared/app.css" />
     <link rel="stylesheet" href="app.css" />
@@ -16,7 +19,17 @@
 
     <div class="status-bar-safe-area"></div>
 
-    <div id="app">Loading...</div>
+    <div id="app">
+        <div class="modern-loading-screen">
+            <div class="loading-wrapper">
+                <div class="glass-circle"></div>
+                <div class="orbit-spinner"></div>
+                <div class="inner-dot"></div>
+            </div>
+            <h2 class="loading-title">ReCourse</h2>
+            <span class="loading-sub">Starting the Application...</span>
+        </div>
+    </div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

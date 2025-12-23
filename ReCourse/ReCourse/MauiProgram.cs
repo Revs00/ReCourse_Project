@@ -36,6 +36,8 @@ namespace ReCourse
             builder.Services.AddSingleton<ISpeechService, MauiSpeechService>();
             // TAMBAHKAN REGISTRASI LOGIN SERVICE (MAUI)
             builder.Services.AddSingleton<AuthService>();
+            // TAMBAHKAN REGISTRASI DARK THEME SERVICE (MAUI)
+            builder.Services.AddSingleton<ThemeService>();
             // TAMBAHKAN REGISTRASI DEVICE DISPLAY SERVICE (MAUI)
             //builder.Services.AddSingleton<IDeviceDisplayService, MauiDeviceDisplayService>();
 

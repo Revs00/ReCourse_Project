@@ -3,8 +3,10 @@
 @inject AuthService AuthService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject ThemeService ThemeService
+@implements IDisposable
 
-<div class="app-shell">
+<div class="app-shell @(ThemeService.IsDarkMode ? "dark-mode" : "")">
     @* Tag Audio Tersembunyi *@
     <audio id="bgmPlayer" src="_content/ReCourse.Shared/audio/christmas-bgm.mp3" preload="auto" loop></audio>
     @* Dekorasi Lampu Gantung *@
@@ -40,8 +42,12 @@
                 <div class="navbar-brand-group">
                     <h2 class="logo-text m-0">ReCourse</h2>
                 </div>
-
                 <div class="nav-links d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-light rounded-pill border-0 px-2"
+                            @onclick="ThemeService.ToggleDarkMode"
+                            style="background: rgba(255,255,255,0.1);">
+                        @(ThemeService.IsDarkMode ? "🌙 Dark" : "☀️ Light")
+                    </button>
                     <NavMenu />
                     <button class="btn btn-sm btn-logout ms-3" @onclick="DoLogout">Logout</button>
                 </div>
@@ -75,11 +81,16 @@
 
     protected override void OnInitialized()
     {
+        ThemeService.OnChange += StateHasChanged;
         // Pengecekan sederhana: jika rute saat ini bukan login dan belum login, arahkan ke login
         if (!AuthService.IsLoggedIn && !Nav.Uri.Contains("/login"))
         {
             Nav.NavigateTo("/login");
         }
+    }
+    public void Dispose()
+    {
+        ThemeService.OnChange -= StateHasChanged;
     }
 
     private void DoLogout()

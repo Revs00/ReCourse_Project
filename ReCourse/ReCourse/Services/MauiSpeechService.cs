@@ -31,34 +31,38 @@ namespace ReCourse.Services
         // Fitur STT (Speech to Text)
         public async Task<string> ListenAsync()
         {
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
             {
-                var isGranted = await SpeechToText.Default.RequestPermissions(cts.Token);
-                if (!isGranted) return "Izin mikrofon ditolak.";
+                var status = await Permissions.RequestAsync<Permissions.Microphone>();
+                if (status != PermissionStatus.Granted)
+                    return "Izin mikrofon tidak diberikan.";
 
-                // Menggunakan CultureInfo Indonesia secara eksplisit jika ingin tes bahasa Indonesia
-                // Atau biarkan CultureInfo.CurrentCulture jika HP/PC sudah bahasa Indonesia
-                var culture = System.Globalization.CultureInfo.CurrentCulture;
-
-                var result = await SpeechToText.Default.ListenAsync(culture, new Progress<string>(), cts.Token);
+                // --- SOLUSI BARU: Biarkan sistem memilih bahasa default ---
+                // Kita gunakan CultureInfo.CurrentCulture secara langsung
+                var result = await SpeechToText.Default.ListenAsync(
+                    CultureInfo.CurrentCulture,
+                    new Progress<string>(),
+                    cts.Token);
 
                 if (result.IsSuccessful)
                 {
-                    return result.Text;
+                    return string.IsNullOrWhiteSpace(result.Text) ? "Tidak ada suara terdeteksi." : result.Text;
                 }
 
-                // Jika error Online Speech muncul lagi, kita berikan instruksi ke user
-                if (result.Exception?.Message.Contains("Privacy Settings") == true)
+                var errorMsg = result.Exception?.Message ?? "Gagal tanpa pesan";
+
+                // Tambahkan saran jika error bahasa masih muncul
+                if (errorMsg.Contains("language is not supported"))
                 {
-                    return "Aktifkan 'Online Speech Recognition' di Privacy Settings Windows Anda.";
+                    return "Error: Bahasa tidak didukung. Pastikan 'Speech Recognition' sudah terpasang di Windows Settings.";
                 }
 
-                return $"Gagal: {result.Exception?.Message ?? "Tidak ada suara"}";
+                return $"Gagal: {errorMsg}";
             }
             catch (Exception ex)
             {
-                return $"Terjadi kesalahan: {ex.Message}";
+                return $"Kesalahan: {ex.Message}";
             }
         }
     }
